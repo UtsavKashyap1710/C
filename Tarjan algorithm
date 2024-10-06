@@ -1,0 +1,102 @@
+// Tarjan algorithm for Strongly Connected Components
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define MAX_NODES 1000
+#define UNVISITED -1
+#define VISITING 0
+#define VISITED 1
+
+int graph[MAX_NODES][MAX_NODES]; // adjacency matrix for simplicity
+int num_nodes;
+
+int visited[MAX_NODES];
+int dfs_order[MAX_NODES];
+int representative_dfs_order[MAX_NODES];
+bool claimed[MAX_NODES];
+int timer = 0;
+
+int stack[MAX_NODES]; // stack to store nodes during DFS
+int stack_top = -1;
+
+int scc[MAX_NODES][MAX_NODES]; // SCCs storage
+int scc_count = 0;
+
+void push(int x) {
+    stack[++stack_top] = x;
+}
+
+int pop() {
+    return stack[stack_top--];
+}
+
+int top() {
+    return stack[stack_top];
+}
+
+bool is_stack_empty() {
+    return stack_top == -1;
+}
+
+void find_sccs(int x) {
+    visited[x] = VISITING;
+    push(x);
+    dfs_order[x] = timer++;
+    representative_dfs_order[x] = dfs_order[x];
+
+    for (int y = 0; y < num_nodes; y++) {
+        if (graph[x][y]) { // if there is an edge from x to y
+            if (visited[y] == UNVISITED) {
+                find_sccs(y);
+            }
+            if (!claimed[y]) {
+                representative_dfs_order[x] = (representative_dfs_order[x] < representative_dfs_order[y]) ? representative_dfs_order[x] : representative_dfs_order[y];
+            }
+        }
+    }
+
+    if (representative_dfs_order[x] == dfs_order[x]) {
+        int popped_value;
+        do {
+            popped_value = top();
+            pop();
+            scc[scc_count][popped_value] = 1; // mark node as part of this SCC
+            claimed[popped_value] = true;
+        } while (popped_value != x);
+        scc_count++; // move to the next SCC
+    }
+
+    visited[x] = VISITED;
+}
+
+int main() {
+    // Initialization
+    for (int i = 0; i < MAX_NODES; i++) {
+        visited[i] = UNVISITED;
+        claimed[i] = false;
+    }
+
+    // Input the graph (use adjacency matrix here)
+    // Example: num_nodes, then graph edges (you can adapt this based on your input structure)
+    
+    for (int x = 0; x < num_nodes; x++) {
+        if (visited[x] == UNVISITED) {
+            find_sccs(x);
+        }
+    }
+
+    // Output SCCs
+    printf("Strongly Connected Components:\n");
+    for (int i = 0; i < scc_count; i++) {
+        printf("SCC #%d: ", i + 1);
+        for (int j = 0; j < num_nodes; j++) {
+            if (scc[i][j]) {
+                printf("%d ", j);
+            }
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
